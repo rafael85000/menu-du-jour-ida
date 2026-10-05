@@ -1,0 +1,32 @@
+name: Menu du jour en story
+
+on:
+  schedule:
+    # du lundi au vendredi, toutes les 10 min, de 7h a 13h heure de Paris
+    # (5h-12h UTC pour couvrir heure d'ete et d'hiver ; le script filtre l'heure exacte)
+    - cron: "*/10 5-12 * * 1-5"
+  workflow_dispatch: {}
+
+concurrency:
+  group: menu-du-jour
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  poster:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Chercher le mail et poster la story
+        env:
+          GMAIL_ADRESSE: ${{ secrets.GMAIL_ADRESSE }}
+          GMAIL_MOT_DE_PASSE: ${{ secrets.GMAIL_MOT_DE_PASSE }}
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+        run: python post_story.py

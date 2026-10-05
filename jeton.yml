@@ -1,0 +1,21 @@
+name: Renouveler le jeton Instagram
+
+# Le jeton Instagram expire au bout de 60 jours : on le renouvelle chaque lundi.
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  renouveler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Renouveler et enregistrer le nouveau jeton
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          NOUVEAU=$(curl -sf "https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=$IG_TOKEN" | jq -r .access_token)
+          test -n "$NOUVEAU" && test "$NOUVEAU" != "null"
+          echo "::add-mask::$NOUVEAU"
+          gh secret set IG_TOKEN --body "$NOUVEAU" --repo "$GITHUB_REPOSITORY"
